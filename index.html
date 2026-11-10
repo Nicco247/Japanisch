@@ -1,0 +1,492 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sakura Dōjō</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: fixed app shell (header, scrolling stage, pinned action bar) so nothing jumps; washi paper, torii vermilion for actions, sakura for progress */
+:root{
+  --paper:#F7F0EC; --card:#FFFAF7; --ink:#2A2226; --muted:#7B6A6F; --line:#E8D8D6;
+  --sakura:#F4C3CF; --sakura-deep:#C95D7E; --torii:#B93A27; --torii-ink:#FFF6F1;
+  --ok:#3E7D57; --ok-bg:#E3F1E7; --mid:#9A6A12; --bad:#B93A27; --bad-bg:#F8E1DC;
+  --display:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#18141C; --card:#221C27; --ink:#F2E8EA; --muted:#A9989E; --line:#382E3A;
+  --sakura:#5C3446; --sakura-deep:#F19BB5; --torii:#E2664C; --torii-ink:#1B0E0A;
+  --ok:#7CC897; --ok-bg:#1F3328; --mid:#E5B65C; --bad:#F08A73; --bad-bg:#3A221E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#18141C; --card:#221C27; --ink:#F2E8EA; --muted:#A9989E; --line:#382E3A;
+  --sakura:#5C3446; --sakura-deep:#F19BB5; --torii:#E2664C; --torii-ink:#1B0E0A;
+  --ok:#7CC897; --ok-bg:#1F3328; --mid:#E5B65C; --bad:#F08A73; --bad-bg:#3A221E; color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden;overscroll-behavior:none}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;overflow:hidden;
+  touch-action:manipulation;-webkit-text-size-adjust:100%;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#petals{position:fixed;inset:0;pointer-events:none;z-index:0}
+#app{position:relative;z-index:1;height:100%;height:100dvh;max-width:520px;margin:0 auto;display:flex;flex-direction:column}
+.scroll{flex:1;min-height:0;overflow-y:auto;scrollbar-gutter:stable;overscroll-behavior:contain;padding-block:20px 32px;display:flex;flex-direction:column;gap:16px}
+h1,h2,.jp{font-family:var(--display)}
+h1{font-size:1.7rem;margin:0;line-height:1.25;text-wrap:balance}
+h2{font-size:1.15rem;margin:0}
+.eyebrow{font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+.brand{display:flex;align-items:center;gap:10px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.hero{border-top:4px solid var(--torii)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.center{justify-content:center}
+.grow{flex:1;min-width:0}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid var(--sakura-deep);outline-offset:2px}
+.btn{border:0;border-radius:999px;padding:12px 20px;background:var(--torii);color:var(--torii-ink);font-weight:700}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.45;cursor:default}
+.lesson{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:14px 0;border-top:1px solid var(--line)}
+.lesson:first-of-type{border-top:0}
+.seal{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;font-family:var(--display);font-size:1.3rem;background:var(--sakura);color:var(--ink)}
+.bar{height:6px;border-radius:6px;background:var(--line);overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--sakura-deep);border-radius:6px;transition:width .3s}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.toggle input{width:20px;height:20px;accent-color:var(--torii)}
+.hint{font-size:.85rem;color:var(--muted)}
+/* session shell */
+.top{flex:none;display:flex;align-items:center;gap:12px;padding-block:14px 12px}
+.x{flex:none;border:1px solid var(--line);background:var(--card);border-radius:999px;width:40px;height:40px;font-size:1.2rem;line-height:1}
+.stage{flex:1;min-height:0;overflow-y:auto;scrollbar-gutter:stable;overscroll-behavior:contain;background:var(--card);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column}
+.inner{margin:auto 0;width:100%;padding:22px 16px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.actions{flex:none;height:80px;display:flex;align-items:center;gap:10px}
+.actions .btn{flex:1}
+.actions .hint{flex:1;text-align:center}
+.big{font-size:2.5rem;line-height:1.25;margin:0;overflow-wrap:anywhere}
+.kana{font-size:5rem;line-height:1;margin:0}
+.ro{color:var(--muted)}
+.de{font-size:1.15rem}
+.kanji{font-size:1.3rem;color:var(--sakura-deep)}
+.listen{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:transparent;border-radius:999px;padding:8px 14px;font-size:.9rem}
+.listen svg{flex:none}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.opt{border:1px solid var(--line);background:var(--paper);border-radius:12px;padding:12px 10px;font-size:1rem;min-height:58px}
+.opt.jp{font-size:1.3rem}
+.opt.ok{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+.opt.bad{background:var(--bad-bg);border-color:var(--bad);color:var(--bad)}
+.sentblock{width:100%;display:flex;flex-direction:column;align-items:center;gap:4px}
+.sent{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 2px}
+.tok{border:0;background:transparent;border-bottom:2px dotted var(--sakura-deep);padding:2px 3px;font-family:var(--display);font-size:1.6rem;line-height:1.3;display:inline-flex;flex-direction:column;align-items:center}
+.tok small{font-family:var(--body);font-size:.68rem;color:var(--muted)}
+.punct{font-family:var(--display);font-size:1.6rem;padding:2px 0}
+.gloss{min-height:1.5em;font-size:.92rem;color:var(--sakura-deep);font-weight:500}
+.box{width:100%;background:var(--paper);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;align-items:center}
+.box .tok,.box .punct{font-size:1.25rem}
+.note{width:100%;margin:0;font-size:.92rem;background:var(--paper);border-left:3px solid var(--sakura-deep);padding:10px 12px;text-align:left;border-radius:0 10px 10px 0}
+.fb{font-weight:700;min-height:1.5em}
+.ok-t{color:var(--ok)} .mid-t{color:var(--mid)} .bad-t{color:var(--bad)}
+.heard{font-size:.9rem;min-height:1.4em}
+@media (max-width:380px){.opts{grid-template-columns:1fr}.big{font-size:2.1rem}}
+@media (prefers-reduced-motion: reduce){.bar>i{transition:none}}
+</style>
+
+<canvas id="petals" aria-hidden="true"></canvas>
+<div id="app"></div>
+
+<script>
+/* Tokens: "kana|romaji|Bedeutung" joined by " / ". A token without "|" is punctuation.
+   Words: [kana, romaji, Bedeutung, Kanji, Erklärung, Beispiel-Tokens, Beispiel-Übersetzung] */
+const LESSONS=[
+ {title:'Reagieren wie ein Japaner',jp:'相づち',seal:'相',
+  words:[
+   ['そうなんだ','sō nanda','ach so, echt?','','Reaktion, wenn dir jemand etwas Neues erzählt. Höflicher: そうなんですか。','そうなんだ|sō nanda|ach so / 、 / しらなかった|shiranakatta|wusste ich nicht / 。','Ach so, das wusste ich nicht.'],
+   ['へえ','hē','oh, interessant','','Zeigt Interesse. Man zieht das え lang.','へえ|hē|oh / 、 / すごい|sugoi|krass / ですね|desu ne|…, oder / 。','Oh, das ist ja krass!'],
+   ['なるほど','naruhodo','verstehe, aha','','Wenn dir etwas klar wird. Gegenüber Chefs besser: そうなんですね。','なるほど|naruhodo|verstehe / 、 / わかりました|wakarimashita|habe verstanden / 。','Aha, verstanden.'],
+   ['ほんとう','hontō','wirklich','本当','Als Frage ほんとう？ heißt es „Echt jetzt?“.','ほんとう|hontō|wirklich / ？ / しんじられない|shinjirarenai|unglaublich / ！','Echt? Unglaublich!'],
+   ['わたしも','watashi mo','ich auch','私も','も heißt „auch“ und ersetzt は oder が.','わたしも|watashi mo|ich auch / コーヒー|kōhī|Kaffee / が|ga|(Partikel bei すき) / すき|suki|mögen / です|desu|(höflich) / 。','Ich mag auch Kaffee.'],
+   ['おもしろい','omoshiroi','interessant, lustig','面白い','','この|kono|dieser / マンガ|manga|Manga / は|wa|(Thema) / おもしろい|omoshiroi|spannend / です|desu|ist / 。','Dieser Manga ist spannend.'],
+   ['じつは','jitsu wa','ehrlich gesagt, eigentlich','実は','Steht am Satzanfang und kündigt etwas Persönliches oder Überraschendes an.','じつは|jitsu wa|ehrlich gesagt / 、 / きょう|kyō|heute / は|wa|(Thema) / たんじょうび|tanjōbi|Geburtstag / です|desu|ist / 。','Ehrlich gesagt habe ich heute Geburtstag.'],
+   ['へた','heta','schlecht (in etwas)','下手','Man ist へた in einer Sache: [Sache] が へたです. Gegenteil: じょうず.','わたし|watashi|ich / は|wa|(Thema) / りょうり|ryōri|Kochen / が|ga|(worin) / へた|heta|schlecht / です|desu|bin / 。','Ich kann schlecht kochen.']],
+  sents:[
+   {t:'へえ|hē|oh / 、 / そうなんだ|sō nanda|ach so, echt / 。',k:'へえ、そうなんだ',de:'Oh, echt? Ach so!',n:'Locker unter Freunden. Höflicher: そうなんですね。'},
+   {t:'わたしも|watashi mo|ich auch / アニメ|anime|Anime / が|ga|(Partikel bei すき) / すき|suki|mögen / です|desu|(höflich) / 。',k:'私もアニメが好きです',de:'Ich mag Anime auch.',n:'も ersetzt は und heißt „auch“.'},
+   {t:'ほんとう|hontō|wirklich / に|ni|(macht ein Adverb) / おもしろい|omoshiroi|interessant / です|desu|ist / ね|ne|…, oder? / 。',k:'本当に面白いですね',de:'Das ist wirklich interessant!',n:'ほんとう + に wird zum Adverb „wirklich“, so wie じょうず + に = „gut“ (wie man etwas tut).'},
+   {t:'じつは|jitsu wa|ehrlich gesagt / 、 / まだ|mada|noch / へた|heta|schlecht / です|desu|bin / けど|kedo|aber … / 。',k:'実はまだ下手ですけど',de:'Ehrlich gesagt bin ich noch nicht gut darin …',n:'Der Satz hört mit けど („aber …“) einfach auf. Den Rest denkt man sich. Das klingt bescheiden und lässt dem anderen Raum zu antworten.'},
+   {t:'なるほど|naruhodo|verstehe / 。 / それで|sorede|und dann / ？',k:'なるほど。それで',de:'Verstehe. Und dann?',n:'それで？ hält das Gespräch am Laufen.'}]},
+ {title:'Schon mal gemacht?',jp:'経験',seal:'経',
+  words:[
+   ['〜たことがある','~ta koto ga aru','schon mal … haben','','Das 〜 ist ein Platzhalter für ein Verb in der ta-Form (lockere Vergangenheit): たべる → たべた → たべたことがある. Höflich: 〜たことがあります.','ふじさん|Fujisan|Berg Fuji / に|ni|auf / のぼった|nobotta|bestiegen (ta-Form) / こと|koto|Erfahrung / が|ga|(Partikel) / ありますか|arimasu ka|gibt es? / 。','Hast du schon mal den Fuji bestiegen?'],
+   ['いちど','ichido','einmal','一度','','いちど|ichido|einmal / みて|mite|anschauen (te-Form) / ください|kudasai|bitte / 。','Schau es dir einmal an.'],
+   ['まだ','mada','noch (nicht)','','Mit verneintem Verb heißt es „noch nicht“, mit positivem „immer noch“.','まだ|mada|noch / たべて|tabete|gegessen / いません|imasen|habe nicht / 。','Ich habe noch nicht gegessen.'],
+   ['にほん','Nihon','Japan','日本','','にほん|Nihon|Japan / の|no|(aus, von) / たべもの|tabemono|Essen / が|ga|(Partikel bei すき) / すき|suki|mögen / です|desu|(höflich) / 。','Ich mag japanisches Essen.'],
+   ['たべる','taberu','essen','食べる','','あさ|asa|morgens / パン|pan|Brot / を|o|(Objekt) / たべます|tabemasu|esse / 。','Morgens esse ich Brot.'],
+   ['のむ','nomu','trinken','飲む','','コーヒー|kōhī|Kaffee / を|o|(Objekt) / のみませんか|nomimasen ka|wollen wir nicht trinken? / 。','Wollen wir einen Kaffee trinken?'],
+   ['いく','iku','gehen, hinfahren','行く','Das Ziel bekommt に: えき に いく = zum Bahnhof gehen.','あした|ashita|morgen / えき|eki|Bahnhof / に|ni|zu / いきます|ikimasu|gehe / 。','Morgen gehe ich zum Bahnhof.'],
+   ['ぜひ','zehi','unbedingt','','Verstärkt einen Wunsch oder eine Einladung.','ぜひ|zehi|unbedingt / きて|kite|kommen (te-Form) / ください|kudasai|bitte / 。','Komm unbedingt vorbei!']],
+  sents:[
+   {t:'にほん|Nihon|Japan / に|ni|nach / いった|itta|gegangen (ta-Form) / こと|koto|Erfahrung / が|ga|(Partikel) / ありますか|arimasu ka|gibt es? (Frage) / 。',k:'日本に行ったことがありますか',de:'Warst du schon mal in Japan?',n:'Verb in ta-Form + ことがあります = „habe schon mal …“. Wörtlich: „Gibt es die Erfahrung, nach Japan gegangen zu sein?“'},
+   {t:'いいえ|iie|nein / 、 / まだ|mada|noch / ありません|arimasen|gibt es nicht / 。',k:'いいえ、まだありません',de:'Nein, noch nicht.'},
+   {t:'おすし|o-sushi|Sushi / を|o|(Objekt-Partikel) / たべた|tabeta|gegessen (ta-Form) / こと|koto|Erfahrung / が|ga|(Partikel) / あります|arimasu|gibt es / 。',k:'お寿司を食べたことがあります',de:'Ich habe schon mal Sushi gegessen.'},
+   {t:'おさけ|o-sake|Sake / は|wa|(Kontrast) / のんだ|nonda|getrunken (ta-Form) / こと|koto|Erfahrung / が|ga|(Partikel) / ない|nai|nicht / です|desu|(höflich) / 。',k:'お酒は飲んだことがないです',de:'Sake habe ich noch nie getrunken.',n:'ないです klingt lockerer, ありません formeller.'},
+   {t:'いちど|ichido|einmal / ぜひ|zehi|unbedingt / いって|itte|hingehen (te-Form) / みたい|mitai|möchte ausprobieren / です|desu|(höflich) / 。',k:'一度ぜひ行ってみたいです',de:'Da möchte ich unbedingt einmal hin.',n:'te-Form + みたい = „etwas mal ausprobieren wollen“: いく → いって → いってみたい.'}]},
+ {title:'Pläne und Wünsche',jp:'予定',seal:'夢',
+  words:[
+   ['〜たい','~tai','möchte …','','Das 〜 steht für den Verbstamm, also die ます-Form ohne ます: たべます → たべたい, はなします → はなしたい. Mit です wird es höflich.','ラーメン|rāmen|Ramen / が|ga|(Partikel) / たべたい|tabetai|möchte essen / です|desu|(höflich) / 。','Ich möchte Ramen essen.'],
+   ['らいねん','rainen','nächstes Jahr','来年','Zeitwörter wie らいねん, あした, きょう brauchen kein に.','らいねん|rainen|nächstes Jahr / ひっこします|hikkoshimasu|ziehe um / 。','Nächstes Jahr ziehe ich um.'],
+   ['りょこう','ryokō','Reise','旅行','Mit する wird es ein Verb: りょこうする = reisen.','りょこう|ryokō|Reise / は|wa|(Thema) / どう|dō|wie / でしたか|deshita ka|war es? / 。','Wie war die Reise?'],
+   ['つもり','tsumori','Absicht, vorhaben','','Verb in Wörterbuchform + つもりです = fester Plan. Verneint: 〜ないつもりです.','きょう|kyō|heute / は|wa|(Thema) / はやく|hayaku|früh / ねる|neru|schlafen gehen / つもり|tsumori|vorhaben / です|desu|(höflich) / 。','Heute will ich früh schlafen gehen.'],
+   ['よてい','yotei','Plan, Termin','予定','','あした|ashita|morgen / の|no|(von) / よてい|yotei|Plan / は|wa|(Thema) / なんですか|nan desu ka|was ist? / 。','Was hast du morgen vor?'],
+   ['もっと','motto','noch mehr, noch …er','','Steht vor dem, was gesteigert wird.','もっと|motto|noch mehr / たべたい|tabetai|möchte essen / です|desu|(höflich) / 。','Ich möchte noch mehr essen.'],
+   ['じょうず','jōzu','gut (in etwas)','上手','[Sache] が じょうずです. Über sich selbst sagt man es nicht, das wirkt angeberisch.','にほんご|nihongo|Japanisch / が|ga|(worin) / じょうず|jōzu|gut / ですね|desu ne|…, oder / ！','Dein Japanisch ist aber gut! (Bescheidene Antwort: いえいえ、まだまだです。)'],
+   ['はなす','hanasu','sprechen','話す','','ゆっくり|yukkuri|langsam / はなして|hanashite|sprechen (te-Form) / ください|kudasai|bitte / 。','Bitte sprich langsam.']],
+  sents:[
+   {t:'らいねん|rainen|nächstes Jahr / にほん|Nihon|Japan / に|ni|nach / りょこう|ryokō|Reise / する|suru|machen / つもり|tsumori|vorhaben / です|desu|(höflich) / 。',k:'来年日本に旅行するつもりです',de:'Ich habe vor, nächstes Jahr nach Japan zu reisen.',n:'Wörterbuchform + つもりです = „ich habe vor zu …“.'},
+   {t:'もっと|motto|noch / じょうず|jōzu|gut / に|ni|(macht ein Adverb) / はなしたい|hanashitai|möchte sprechen / です|desu|(höflich) / 。',k:'もっと上手に話したいです',de:'Ich möchte noch besser sprechen können.',n:'Verbstamm + たい = „möchte …“: はなします → はなしたい.'},
+   {t:'しゅうまつ|shūmatsu|Wochenende / は|wa|(Thema) / なにか|nanika|irgendetwas / よてい|yotei|Plan / が|ga|(Partikel) / ありますか|arimasu ka|gibt es? / 。',k:'週末は何か予定がありますか',de:'Hast du am Wochenende etwas vor?',n:'なに = was, なにか = irgendetwas.'},
+   {t:'きょうと|Kyōto|Kyoto / で|de|in (Ort einer Handlung) / おてら|o-tera|Tempel / を|o|(Objekt-Partikel) / みたい|mitai|möchte sehen / です|desu|(höflich) / 。',k:'京都でお寺を見たいです',de:'In Kyoto möchte ich Tempel sehen.',n:'で markiert den Ort, an dem etwas passiert. に markiert das Ziel.'}]},
+ {title:'Warum? Weil …',jp:'理由',seal:'理',
+  words:[
+   ['どうして','dōshite','warum','','Locker auch なんで.','どうして|dōshite|warum / おくれた|okureta|zu spät gekommen / の|no|(fragt nach Erklärung) / ？','Warum bist du zu spät?'],
+   ['〜から','~kara','weil …','','Das 〜 steht für den Grund. Reihenfolge: Grund + から, dann die Folge. Am Satzende: 〜からです = „weil …“.','さむい|samui|kalt / から|kara|weil / 、 / まど|mado|Fenster / を|o|(Objekt) / しめます|shimemasu|schließe / 。','Weil es kalt ist, mache ich das Fenster zu.'],
+   ['おもう','omou','denken, finden','思う','Satz + と おもいます = „ich denke, dass …“.','いい|ii|gut / と|to|(dass …) / おもいます|omoimasu|finde ich / 。','Ich finde das gut.'],
+   ['たぶん','tabun','wahrscheinlich','','','たぶん|tabun|wahrscheinlich / だいじょうぶ|daijōbu|okay / です|desu|ist / 。','Das passt wahrscheinlich.'],
+   ['すごい','sugoi','toll, krass','','','すごい|sugoi|krass / ！ / ほんとう|hontō|wirklich / に|ni|(Adverb) / じょうず|jōzu|gut / ですね|desu ne|…, oder / 。','Krass! Du bist wirklich gut.'],
+   ['いそがしい','isogashii','beschäftigt, stressig','忙しい','','さいきん|saikin|in letzter Zeit / いそがしい|isogashii|beschäftigt / です|desu|bist / か|ka|(Frage) / 。','Bist du in letzter Zeit viel beschäftigt?'],
+   ['つかれる','tsukareru','müde werden','疲れる','Meist in der Vergangenheit: つかれました = „ich bin (jetzt) müde“.','きょう|kyō|heute / は|wa|(Thema) / つかれました|tsukaremashita|bin müde / 。','Heute bin ich echt müde.'],
+   ['べんきょう','benkyō','Lernen, Studium','勉強','Mit する wird es ein Verb: べんきょうする = lernen.','まいにち|mainichi|jeden Tag / べんきょうします|benkyō shimasu|lerne / 。','Ich lerne jeden Tag.']],
+  sents:[
+   {t:'どうして|dōshite|warum / にほんご|nihongo|Japanisch / を|o|(Objekt-Partikel) / べんきょうしています|benkyō shite imasu|lernst (gerade) / か|ka|(Frage) / 。',k:'どうして日本語を勉強していますか',de:'Warum lernst du Japanisch?',n:'te-Form + います = gerade/regelmäßig dabei sein: べんきょうしています.'},
+   {t:'アニメ|anime|Anime / が|ga|(Partikel bei すき) / すき|suki|mögen / だから|da kara|weil (es so ist) / です|desu|(höflich) / 。',k:'アニメが好きだからです',de:'Weil ich Anime mag.',n:'Grund + からです ist die typische Antwort auf どうして.'},
+   {t:'それ|sore|das / は|wa|(Thema) / すごい|sugoi|toll / と|to|(dass …) / おもいます|omoimasu|finde ich / 。',k:'それはすごいと思います',de:'Ich finde das toll.',n:'… と思います = „ich finde, dass …“. Das macht Aussagen weicher und klingt natürlicher.'},
+   {t:'しごと|shigoto|Arbeit / が|ga|(Partikel) / いそがしい|isogashii|stressig / から|kara|weil / 、 / ちょっと|chotto|etwas / つかれました|tsukaremashita|bin müde geworden / 。',k:'仕事が忙しいから、ちょっと疲れました',de:'Weil die Arbeit stressig ist, bin ich etwas müde.',n:'Im Japanischen steht der Grund vorne: Grund + から, dann die Folge.'},
+   {t:'あした|ashita|morgen / は|wa|(Thema) / たぶん|tabun|wahrscheinlich / あめ|ame|Regen / だと|da to|dass es … ist / おもいます|omoimasu|denke ich / 。',k:'明日はたぶん雨だと思います',de:'Ich glaube, morgen regnet es wahrscheinlich.',n:'Nach einem Nomen braucht と おもう ein だ dazwischen: あめ だ と おもいます.'}]},
+ {title:'Sich verabreden',jp:'約束',seal:'約',
+  words:[
+   ['いっしょに','issho ni','zusammen','一緒に','','いっしょに|issho ni|zusammen / かえりましょう|kaerimashō|lass uns heimgehen / 。','Lass uns zusammen heimgehen.'],
+   ['〜ませんか','~masen ka','wollen wir nicht …?','','Das 〜 steht für den Verbstamm: いきます → いきませんか. Klingt wie „Hast du Lust, …?“','えいが|eiga|Film / を|o|(Objekt) / みませんか|mimasen ka|wollen wir nicht sehen? / 。','Wollen wir einen Film schauen?'],
+   ['〜ましょう','~mashō','lass uns …','','Das 〜 steht für den Verbstamm: いきます → いきましょう. Als Vorschlag oder als Zusage auf eine Einladung.','そろそろ|sorosoro|langsam / いきましょう|ikimashō|lass uns gehen / 。','Lass uns langsam los.'],
+   ['ひま','hima','frei, Zeit haben','暇','','きょう|kyō|heute / ひま|hima|Zeit haben / ？','Hast du heute Zeit? (locker)'],
+   ['だいじょうぶ','daijōbu','okay, passt','大丈夫','Kann „okay“, „alles gut?“ und auch „nein danke“ heißen.','だいじょうぶ|daijōbu|alles gut / ですか|desu ka|ist es? / 。','Alles in Ordnung?'],
+   ['ざんねん','zannen','schade','残念','','ざんねん|zannen|schade / でした|deshita|war / ね|ne|…, oder / 。','Das war schade, oder?'],
+   ['こんど','kondo','nächstes Mal','今度','','こんど|kondo|nächstes Mal / おしえて|oshiete|beibringen (te-Form) / ください|kudasai|bitte / 。','Bring es mir nächstes Mal bei.'],
+   ['どようび','doyōbi','Samstag','土曜日','Wochentage bekommen に: どようび に = am Samstag.','どようび|doyōbi|Samstag / に|ni|am / あいましょう|aimashō|lass uns treffen / 。','Lass uns am Samstag treffen.']],
+  sents:[
+   {t:'こんど|kondo|nächstes Mal / いっしょに|issho ni|zusammen / ラーメン|rāmen|Ramen / を|o|(Objekt-Partikel) / たべませんか|tabemasen ka|wollen wir nicht essen? / 。',k:'今度一緒にラーメンを食べませんか',de:'Wollen wir mal zusammen Ramen essen gehen?',n:'〜ませんか ist die höfliche, typische Einladung.'},
+   {t:'いいですね|ii desu ne|gute Idee / 、 / たべましょう|tabemashō|lass uns essen / ！',k:'いいですね、食べましょう',de:'Gute Idee, machen wir!'},
+   {t:'どようび|doyōbi|Samstag / は|wa|(Thema) / ひま|hima|frei / ですか|desu ka|bist du …? / 。',k:'土曜日は暇ですか',de:'Hast du am Samstag Zeit?'},
+   {t:'どようび|doyōbi|Samstag / なら|nara|wenn es … ist / だいじょうぶ|daijōbu|passt / です|desu|(höflich) / 。',k:'土曜日なら大丈夫です',de:'Samstag passt mir.',n:'〜なら = „wenn es um … geht“. Praktisch für Gegenvorschläge.'},
+   {t:'ざんねん|zannen|schade / です|desu|ist / けど|kedo|aber / 、 / その|sono|dieser / ひ|hi|Tag / は|wa|(Thema) / ちょっと|chotto|etwas … / 。',k:'残念ですけど、その日はちょっと',de:'Schade, aber an dem Tag passt es leider nicht.',n:'Der Satz hört nach ちょっと („etwas …“) einfach auf. Gemeint ist „…ungünstig“. So sagt man auf Japanisch höflich Nein, ohne es auszusprechen.'},
+   {t:'じゃあ|jā|na dann / 、 / また|mata|wieder / こんど|kondo|nächstes Mal / 。',k:'じゃあ、また今度',de:'Na dann ein andermal!'}]}
+];
+LESSONS.forEach(L=>L.words=L.words.map(([j,r,d,k,n,ex,exde])=>({j,r,d,k,n,ex:ex?{t:ex,de:exde}:null})));
+const KATA='ア a イ i ウ u エ e オ o カ ka キ ki ク ku ケ ke コ ko サ sa シ shi ス su セ se ソ so タ ta チ chi ツ tsu テ te ト to ナ na ニ ni ヌ nu ネ ne ノ no ハ ha ヒ hi フ fu ヘ he ホ ho マ ma ミ mi ム mu メ me モ mo ヤ ya ユ yu ヨ yo ラ ra リ ri ル ru レ re ロ ro ワ wa ヲ wo ン n'
+  .split(' ').reduce((a,x,i,arr)=>(i%2||a.push([x,arr[i+1]]),a),[]);
+
+/* ---- storage (per browser only) ---- */
+const KEY='sakura-dojo-v2';
+let S={};
+try{S=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){}
+S=Object.assign({srs:{},kata:{},romaji:false},S);
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+
+/* ---- spaced repetition: box 0..6, interval in days ---- */
+const DAYS=[0,1,2,4,8,16,32];
+function next(box,ok){return ok?[Math.min(box+1,6),DAYS[Math.min(box+1,6)]*864e5]:[0,10*6e4]}
+function grade(id,ok){const c=S.srs[id]||{b:0};const [b,ms]=next(c.b,ok);S.srs[id]={b,due:Date.now()+ms}}
+
+/* ---- helpers ---- */
+const toks=t=>t.split(' / ').map(x=>{const [j,r,d]=x.split('|');return{j,r,d}});
+const joinJP=t=>toks(t).map(x=>x.j).join('');
+const joinRo=t=>toks(t).filter(x=>x.r).map(x=>x.r).join(' ');
+function getItem(id){const [k,l,i]=id.split(':');const L=LESSONS[+l];return k==='w'?{kind:'w',w:L.words[+i]}:{kind:'s',s:L.sents[+i]}}
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---- pronunciation check: compare recognizer text with kana and kanji spelling ---- */
+const norm=s=>s.replace(/[\s、。！？!?,.…〜~「」]/g,'').replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));
+function sim(a,b){
+  a=norm(a);b=norm(b);if(!a||!b)return 0;
+  let p=[...Array(b.length+1).keys()];
+  for(let i=1;i<=a.length;i++){const c=[i];for(let j=1;j<=b.length;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}
+  return 1-p[b.length]/Math.max(a.length,b.length);
+}
+console.assert(sim('コンニチハ','こんにちは')===1&&sim('あいう','あいえ')<1&&next(0,true)[1]===864e5&&next(4,false)[0]===0,'self-check');
+
+/* ---- speech output ---- */
+let voices=[];
+const loadVoices=()=>{try{voices=speechSynthesis.getVoices()}catch(e){}};
+const jaVoice=()=>voices.find(v=>v.lang&&v.lang.replace('_','-').toLowerCase().startsWith('ja'));
+function speak(text){
+  if(!('speechSynthesis' in window))return null;
+  if(!voices.length)loadVoices();
+  // Chrome drops an utterance spoken right after cancel(), so only cancel when something is playing
+  if(speechSynthesis.speaking||speechSynthesis.pending)speechSynthesis.cancel();
+  speechSynthesis.resume();
+  const u=new SpeechSynthesisUtterance(text.replace(/〜/g,''));u.lang='ja-JP';u.rate=.85;
+  const v=jaVoice();if(v)u.voice=v;
+  speechSynthesis.speak(u);return u;
+}
+function testSound(m){
+  if(!('speechSynthesis' in window)){m.textContent='Dieser Browser kann hier gar nicht vorlesen. Öffne die Seite in Chrome.';return}
+  loadVoices();
+  const noJa='Auf deinem Gerät ist keine japanische Stimme installiert. Android: in den Einstellungen nach „Text-zu-Sprache“ suchen › Sprachdienste von Google › Zahnrad › Sprachdaten installieren › Japanisch. Windows: Einstellungen › Zeit und Sprache › Sprache › Japanisch hinzufügen (mit Sprachausgabe).';
+  m.textContent='Teste …';
+  let started=false;const u=speak('こんにちは、ニコさん');
+  u.onstart=()=>{started=true;m.textContent=jaVoice()?'Die Ausgabe läuft. Hörst du nichts, prüf Lautstärke und Bluetooth.':noJa};
+  u.onerror=e=>{started=true;m.textContent='Fehler „'+e.error+'“. '+(jaVoice()?'Öffne die Seite in Chrome und teste nochmal.':noJa)};
+  setTimeout(()=>{if(!started)m.textContent=(jaVoice()?'':noJa+' ')+'Die Ausgabe startet hier nicht. Öffne die Datei in Chrome und teste nochmal.'},3000);
+}
+
+/* ---- speech input (Chrome's built-in recognition, needs internet) ---- */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null;
+function listen(btn){
+  const out=btn.parentElement.nextElementSibling,targets=JSON.parse(btn.dataset.mic);
+  if(!SR){out.textContent='Die Aussprache-Prüfung gibt es nur in Chrome.';return}
+  if(rec){rec.abort();return}
+  try{speechSynthesis.cancel()}catch(e){}
+  rec=new SR();rec.lang='ja-JP';rec.maxAlternatives=5;rec.interimResults=false;
+  btn.classList.add('on');btn.lastChild.textContent='Ich höre zu …';out.textContent='';out.className='heard';
+  rec.onresult=e=>{
+    let best=0,heard=e.results[0][0].transcript;
+    for(const a of e.results[0]){const s=Math.max(...targets.map(t=>sim(a.transcript,t)));if(s>best){best=s;heard=a.transcript}}
+    const p=Math.round(best*100);
+    out.className='heard '+(p>=80?'ok-t':p>=55?'mid-t':'bad-t');
+    out.innerHTML=`Erkannt: <span class="jp">${esc(heard)}</span> · ${p} %<br>${p>=80?'Sehr gut!':p>=55?'Fast. Hör nochmal genau hin und versuch es noch einmal.':'Das war noch weit weg. Hör es dir an und sprich langsam nach.'}`;
+  };
+  rec.onerror=e=>{out.className='heard bad-t';out.textContent=
+    e.error==='not-allowed'||e.error==='service-not-allowed'?'Das Mikrofon ist blockiert. Tipp links in der Adressleiste auf das Symbol und erlaube das Mikrofon.':
+    e.error==='no-speech'?'Ich habe nichts gehört. Tipp nochmal und sprich direkt los.':
+    e.error==='network'?'Die Aussprache-Prüfung braucht Internet.':
+    e.error==='aborted'?'':'Das hat nicht geklappt ('+e.error+').'};
+  rec.onend=()=>{rec=null;btn.classList.remove('on');btn.lastChild.textContent='Sprechen'};
+  try{rec.start()}catch(e){rec=null;out.textContent='Das Mikrofon lässt sich hier nicht starten. Öffne die Datei in Chrome.'}
+}
+
+/* ---- building blocks ---- */
+const ICON_SPK='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>';
+const ICON_MIC='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+const listenBtn=t=>`<button class="listen" data-say="${esc(t)}">${ICON_SPK}<span>Anhören</span></button>`;
+function controls(say,targets){
+  const mic=targets?`<button class="listen" data-mic="${esc(JSON.stringify(targets))}">${ICON_MIC}<span>Sprechen</span></button>`:'';
+  return `<div class="row center">${listenBtn(say)}${mic}</div><div class="heard" aria-live="polite"></div>`;
+}
+function sentHTML(t,showRo){
+  return `<div class="sentblock"><div class="sent">${toks(t).map(x=>x.r?`<button class="tok" data-j="${esc(x.j)}" data-r="${esc(x.r)}" data-d="${esc(x.d)}">${x.j}${showRo?`<small>${x.r}</small>`:''}</button>`:`<span class="punct">${x.j}</span>`).join('')}</div>
+    <div class="gloss" aria-live="polite">Tippe ein Wort an</div></div>`;
+}
+function wordDetails(w){
+  return `${w.n?`<p class="note">${esc(w.n)}</p>`:''}
+    ${w.ex?`<div class="box"><div class="eyebrow">Beispiel</div>${sentHTML(w.ex.t,S.romaji)}<div>${esc(w.ex.de)}</div>${listenBtn(joinJP(w.ex.t))}</div>`:''}`;
+}
+const wordTargets=w=>w.j.startsWith('〜')?null:[w.j,w.k].filter(Boolean);
+
+const app=document.getElementById('app');
+app.addEventListener('click',e=>{
+  const say=e.target.closest('[data-say]');if(say)speak(say.dataset.say);
+  const mic=e.target.closest('[data-mic]');if(mic)listen(mic);
+  const t=e.target.closest('.tok');
+  if(t){t.closest('.sentblock').querySelector('.gloss').textContent=`${t.dataset.j} · ${t.dataset.r} · ${t.dataset.d}`;speak(t.dataset.j)}
+});
+
+/* ---- home ---- */
+function dueIds(){const n=Date.now();return Object.keys(S.srs).filter(id=>S.srs[id].due<=n)}
+function greet(){const h=new Date().getHours();return h<11?'おはよう':h<18?'こんにちは':'こんばんは'}
+let confirmReset=false;
+function home(){
+  session=null;if(rec)rec.abort();
+  const due=dueIds().length;
+  app.innerHTML=`<div class="scroll">
+  <header class="brand">
+    <svg width="34" height="30" viewBox="0 0 34 30" aria-hidden="true"><rect x="0" y="2" width="34" height="4" rx="2" fill="var(--torii)"/><rect x="3" y="9" width="28" height="3" fill="var(--torii)"/><rect x="7" y="5" width="4" height="25" fill="var(--torii)"/><rect x="23" y="5" width="4" height="25" fill="var(--torii)"/></svg>
+    <div class="eyebrow grow">Sakura Dōjō</div>
+    <button class="listen" id="fs">Vollbild</button>
+  </header>
+  <section class="panel hero">
+    <div class="eyebrow">${greet()}, Nico</div>
+    <h1>${due?`${due} Karte${due>1?'n':''} warten auf dich`:'Heute ist alles wiederholt'}</h1>
+    <p class="muted" style="margin:0">Die Wiederholung bringt Wörter und Sätze zurück, kurz bevor du sie vergisst. Ein paar alte Bekannte mischen sich immer dazu.</p>
+    <button class="btn" id="rev" ${Object.keys(S.srs).length?'':'disabled'}>${due?'Jetzt wiederholen':'Trotzdem üben'}</button>
+  </section>
+  <section class="panel">
+    <h2>Lektionen</h2>
+    ${LESSONS.map((L,i)=>{const tot=L.words.length+L.sents.length;const n=Object.keys(S.srs).filter(id=>id.split(':')[1]==i).length;
+      return `<div class="lesson"><div class="seal" aria-hidden="true">${L.seal}</div>
+      <div class="grow"><div><strong>${L.title}</strong> <span class="muted jp">${L.jp}</span></div>
+      <div class="bar" aria-label="${n} von ${tot} gelernt"><i style="width:${n/tot*100}%"></i></div>
+      <div class="hint">${n} von ${tot} gelernt</div></div>
+      <button class="btn ${n?'ghost':''}" data-lesson="${i}">${n?'Nochmal':'Lernen'}</button></div>`}).join('')}
+  </section>
+  <section class="panel">
+    <div class="row"><div class="seal jp" aria-hidden="true">カ</div>
+      <div class="grow"><strong>Katakana-Training</strong><div class="hint">15 Zeichen. Die, die du oft verwechselst, kommen öfter dran.</div></div>
+      <button class="btn ghost" id="kata">Start</button></div>
+  </section>
+  <section class="panel">
+    <label class="toggle" for="romaji"><span>Romaji immer anzeigen<br><span class="hint">Aus ist besser fürs Kana-Lesen. Antippen zeigt sie trotzdem.</span></span>
+      <input type="checkbox" id="romaji" ${S.romaji?'checked':''}></label>
+    <div class="row"><button class="btn ghost" id="sound">Ton testen</button><span class="hint grow" id="soundmsg" aria-live="polite">Kein Ton? Tipp hier, dann siehst du, woran es liegt.</span></div>
+    <p class="hint" style="margin:0">„Sprechen“ prüft deine Aussprache mit der Spracherkennung von Chrome. Das braucht Internet, und Chrome fragt beim ersten Mal nach dem Mikrofon.</p>
+    <button class="btn ghost" id="reset">${confirmReset?'Wirklich alles löschen? Nochmal tippen':'Fortschritt zurücksetzen'}</button>
+    <p class="hint" style="margin:0">Dein Fortschritt bleibt nur in diesem Browser auf diesem Gerät gespeichert.</p>
+  </section></div>`;
+  app.querySelector('#rev').onclick=startReview;
+  app.querySelector('#kata').onclick=startKata;
+  app.querySelector('#fs').onclick=()=>{const d=document;(d.fullscreenElement?d.exitFullscreen():d.documentElement.requestFullscreen?.())?.catch?.(()=>{})};
+  app.querySelectorAll('[data-lesson]').forEach(b=>b.onclick=()=>startLesson(+b.dataset.lesson));
+  app.querySelector('#sound').onclick=()=>testSound(app.querySelector('#soundmsg'));
+  app.querySelector('#romaji').onchange=e=>{S.romaji=e.target.checked;save()};
+  app.querySelector('#reset').onclick=()=>{if(confirmReset){S={srs:{},kata:{},romaji:S.romaji};save();confirmReset=false}else confirmReset=true;home()};
+}
+
+/* ---- sessions ---- */
+let session=null;
+function mcItem(li,wi,dir){
+  const L=LESSONS[li],w=L.words[wi];
+  const opts=shuffle([w,...shuffle(L.words.filter(x=>x!==w)).slice(0,3)]);
+  return{k:'mc',id:`w:${li}:${wi}`,w,dir,opts};
+}
+function startLesson(li){
+  const L=LESSONS[li],q=[];
+  for(let c=0;c<L.words.length;c+=4){
+    const idx=[...L.words.keys()].slice(c,c+4);
+    idx.forEach(i=>q.push({k:'intro',w:L.words[i]}));
+    shuffle(idx.slice()).forEach(i=>q.push(mcItem(li,i,'jd')));
+  }
+  shuffle([...L.words.keys()]).forEach(i=>q.push(mcItem(li,i,'dj')));
+  L.sents.forEach((s,i)=>q.push({k:'card',id:`s:${li}:${i}`,dir:'jd'}));
+  run(L.title,q);
+}
+function startReview(){
+  const due=shuffle(dueIds()).slice(0,20);
+  const old=shuffle(Object.keys(S.srs).filter(id=>!due.includes(id))).slice(0,2);
+  run('Wiederholung',[...due,...old].map(id=>({k:'card',id,dir:Math.random()<.5?'jd':'dj',old:old.includes(id)})));
+}
+function startKata(){
+  const weighted=KATA.flatMap(k=>Array(1+(S.kata[k[0]]||0)*2).fill(k));
+  const pick=[];shuffle(weighted).forEach(k=>{if(pick.length<15&&!pick.includes(k))pick.push(k)});
+  run('Katakana',pick.map(k=>({k:'kata',c:k,opts:shuffle([k,...shuffle(KATA.filter(x=>x!==k)).slice(0,3)])})));
+}
+function run(title,queue){session={title,queue,pos:0,results:{},first:0,firstOk:0};step()}
+function record(id,ok){
+  if(!(id in session.results)){session.first++;if(ok)session.firstOk++}
+  session.results[id]=(session.results[id]??true)&&ok;
+}
+function finish(){if(!session)return;for(const id in session.results)grade(id,session.results[id]);save()}
+function step(){
+  if(rec)rec.abort();
+  const s=session,it=s.queue[s.pos];
+  if(!it)return done();
+  app.innerHTML=`<div class="top"><button class="x" id="quit" aria-label="Beenden">×</button>
+    <div class="grow"><div class="eyebrow">${esc(s.title)} · ${s.pos+1} / ${s.queue.length}</div><div class="bar"><i style="width:${s.pos/s.queue.length*100}%"></i></div></div></div>
+    <section class="stage"><div class="inner" id="stage"></div></section>
+    <div class="actions" id="actions"></div>`;
+  app.querySelector('#quit').onclick=()=>{finish();home()};
+  ({intro,mc,card,kata})[it.k](app.querySelector('#stage'),app.querySelector('#actions'),it);
+}
+function nextBtn(act){
+  act.innerHTML='<button class="btn" id="next">Weiter</button>';
+  const b=act.querySelector('#next');b.onclick=()=>{session.pos++;step()};b.focus();
+}
+const requeue=it=>session.queue.push(Object.assign({},it,{again:true}));
+
+function intro(st,act,it){
+  const w=it.w;
+  st.innerHTML=`<div class="eyebrow">Neues Wort</div><p class="big jp">${w.j}</p>${w.k?`<div class="kanji jp">${w.k}</div>`:''}
+    <div class="ro">${w.r}</div><div class="de">${esc(w.d)}</div>${controls(w.j,wordTargets(w))}${wordDetails(w)}`;
+  speak(w.j);nextBtn(act);
+}
+function mc(st,act,it){
+  const w=it.w,jd=it.dir==='jd';
+  st.innerHTML=`<div class="eyebrow">${jd?'Was heißt das?':'Wie sagt man das auf Japanisch?'}</div>
+    ${jd?`<p class="big jp">${w.j}</p>${S.romaji?`<div class="ro">${w.r}</div>`:''}${listenBtn(w.j)}`:`<p class="big" style="font-size:1.8rem">${esc(w.d)}</p>`}
+    <div class="opts">${it.opts.map((o,i)=>`<button class="opt ${jd?'':'jp'}" data-i="${i}">${esc(jd?o.d:o.j)}</button>`).join('')}</div>
+    <div class="fb" aria-live="polite"></div>`;
+  act.innerHTML='<span class="hint">Wähle eine Antwort</span>';
+  if(jd)speak(w.j);
+  st.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+    const ok=it.opts[+b.dataset.i]===w;
+    st.querySelectorAll('.opt').forEach((x,i)=>{x.disabled=true;if(it.opts[i]===w)x.classList.add('ok')});
+    if(!ok){b.classList.add('bad');requeue(it)}
+    record(it.id,ok);
+    const fb=st.querySelector('.fb');fb.className='fb '+(ok?'ok-t':'bad-t');
+    fb.textContent=ok?'Richtig!':`${w.j} (${w.r}) heißt „${w.d}“. Kommt gleich nochmal.`;
+    if(!jd)speak(w.j);
+    nextBtn(act);
+  });
+}
+function card(st,act,it){
+  const x=getItem(it.id),jd=it.dir==='jd',isW=x.kind==='w';
+  const jp=isW?x.w.j:joinJP(x.s.t), de=isW?x.w.d:x.s.de;
+  const targets=isW?wordTargets(x.w):[jp,x.s.k];
+  const label=it.old?'Alter Bekannter':it.again?'Nochmal':isW?'Wort':'Satz';
+  const front=()=>{
+    st.innerHTML=`<div class="eyebrow">${label}</div>
+      ${jd?(isW?`<p class="big jp">${jp}</p>${S.romaji?`<div class="ro">${x.w.r}</div>`:''}`:sentHTML(x.s.t,S.romaji))+controls(jp,targets)
+          :`<p class="big" style="font-size:1.7rem">${esc(de)}</p>${targets?`<div class="row center"><button class="listen" data-mic="${esc(JSON.stringify(targets))}">${ICON_MIC}<span>Sprechen</span></button></div><div class="heard" aria-live="polite"></div>`:''}`}
+      <p class="hint">${jd?'Hör zu, sprich nach und überleg, was es heißt.':'Sag es laut auf Japanisch, dann deck auf.'}</p>`;
+    if(jd)speak(jp);
+    act.innerHTML='<button class="btn" id="flip">Aufdecken</button>';
+    act.querySelector('#flip').onclick=back;
+  };
+  const back=()=>{
+    st.innerHTML=`<div class="eyebrow">${label}</div>
+      ${isW?`<p class="big jp">${jp}</p>${x.w.k?`<div class="kanji jp">${x.w.k}</div>`:''}<div class="ro">${x.w.r}</div>`:sentHTML(x.s.t,true)}
+      <div class="de">${esc(de)}</div>${controls(jp,targets)}
+      ${isW?wordDetails(x.w):x.s.n?`<p class="note">${esc(x.s.n)}</p>`:''}`;
+    speak(jp);
+    act.innerHTML='<button class="btn ghost" id="no">Noch nicht</button><button class="btn" id="yes">Gewusst</button>';
+    act.querySelector('#yes').onclick=()=>{record(it.id,true);session.pos++;step()};
+    act.querySelector('#no').onclick=()=>{record(it.id,false);if(!it.again)requeue(it);session.pos++;step()};
+    act.querySelector('#yes').focus();
+  };
+  front();
+}
+function kata(st,act,it){
+  const [c,r]=it.c;
+  st.innerHTML=`<div class="eyebrow">Welche Silbe ist das?</div><p class="kana jp">${c}</p>
+    <div class="opts">${it.opts.map((o,i)=>`<button class="opt" data-i="${i}">${o[1]}</button>`).join('')}</div>
+    <div class="fb" aria-live="polite"></div>`;
+  act.innerHTML='<span class="hint">Wähle eine Antwort</span>';
+  st.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+    const ok=it.opts[+b.dataset.i]===it.c;
+    st.querySelectorAll('.opt').forEach((x,i)=>{x.disabled=true;if(it.opts[i]===it.c)x.classList.add('ok')});
+    if(!ok){b.classList.add('bad');requeue(it);S.kata[c]=(S.kata[c]||0)+1}else if(!it.again)S.kata[c]=Math.max(0,(S.kata[c]||0)-1);
+    if(!it.again){session.first++;if(ok)session.firstOk++}
+    save();speak(c);
+    const fb=st.querySelector('.fb');fb.className='fb '+(ok?'ok-t':'bad-t');fb.textContent=ok?'Richtig!':`${c} ist „${r}“.`;
+    nextBtn(act);
+  });
+}
+function done(){
+  const s=session;finish();session=null;
+  app.innerHTML=`<div class="top"></div><section class="stage"><div class="inner"><div class="eyebrow">${esc(s.title)} geschafft</div>
+    <p class="big jp">おつかれさま！</p><p class="de">${s.firstOk} von ${s.first} beim ersten Versuch richtig</p>
+    <p class="hint">Was du nicht wusstest, kommt in 10 Minuten wieder. Der Rest kommt in ein paar Tagen.</p></div></section>
+    <div class="actions"><button class="btn" id="home">Zur Übersicht</button></div>`;
+  app.querySelector('#home').onclick=home;
+}
+
+/* ---- falling petals ---- */
+(()=>{
+  const cv=document.getElementById('petals'),ctx=cv.getContext('2d');
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  let W,H,col='#F4C3CF',t=0;const P=[];
+  const size=()=>{W=cv.width=innerWidth*devicePixelRatio;H=cv.height=innerHeight*devicePixelRatio;cv.style.width=innerWidth+'px';cv.style.height=innerHeight+'px'};
+  size();addEventListener('resize',size);
+  for(let i=0;i<14;i++)P.push({x:Math.random(),y:Math.random(),s:.6+Math.random()*.8,v:.0005+Math.random()*.0007,r:Math.random()*6,w:Math.random()*6});
+  (function f(){
+    if(t++%60===0)col=getComputedStyle(document.documentElement).getPropertyValue('--sakura-deep').trim()||col;
+    ctx.clearRect(0,0,W,H);ctx.fillStyle=col;ctx.globalAlpha=.3;
+    const k=devicePixelRatio*7;
+    for(const p of P){
+      p.y+=p.v;p.x+=Math.sin((p.y*10)+p.w)*.0006;p.r+=.01;
+      if(p.y>1.05){p.y=-.05;p.x=Math.random()}
+      ctx.save();ctx.translate(p.x*W,p.y*H);ctx.rotate(p.r);ctx.scale(p.s,p.s*Math.abs(Math.cos(p.r))+.3);
+      ctx.beginPath();ctx.moveTo(0,-k);ctx.bezierCurveTo(k,-k,k,k*.6,0,k);ctx.bezierCurveTo(-k,k*.6,-k,-k,0,-k);ctx.fill();ctx.restore();
+    }
+    requestAnimationFrame(f);
+  })();
+})();
+if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
+home();
+</script>
