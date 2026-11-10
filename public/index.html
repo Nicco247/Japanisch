@@ -29,7 +29,8 @@ body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:
 #petals{position:fixed;inset:0;pointer-events:none;z-index:0}
 #app{position:relative;z-index:1;height:100%;height:100dvh;max-width:520px;margin:0 auto;display:flex;flex-direction:column}
 .scroll{flex:1;min-height:0;overflow-y:auto;scrollbar-gutter:stable;overscroll-behavior:contain;padding-block:20px 32px;display:flex;flex-direction:column;gap:16px}
-h1,h2,.jp{font-family:var(--display)}
+h1,h2{font-family:var(--display)}
+.jp{font-family:var(--body);font-weight:500}
 h1{font-size:1.7rem;margin:0;line-height:1.25;text-wrap:balance}
 h2{font-size:1.15rem;margin:0}
 .eyebrow{font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
@@ -53,6 +54,8 @@ button:focus-visible{outline:3px solid var(--sakura-deep);outline-offset:2px}
 .toggle{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .toggle input{width:20px;height:20px;accent-color:var(--torii)}
 .hint{font-size:.85rem;color:var(--muted)}
+.field{flex:1;min-width:0;border:1px solid var(--line);border-radius:999px;padding:11px 16px;background:var(--paper);color:var(--ink);font:inherit;text-transform:lowercase;letter-spacing:.1em}
+.code{font-size:1.4rem;letter-spacing:.15em;font-variant-numeric:tabular-nums}
 /* session shell */
 .top{flex:none;display:flex;align-items:center;gap:12px;padding-block:14px 12px}
 .x{flex:none;border:1px solid var(--line);background:var(--card);border-radius:999px;width:40px;height:40px;font-size:1.2rem;line-height:1}
@@ -75,9 +78,9 @@ button:focus-visible{outline:3px solid var(--sakura-deep);outline-offset:2px}
 .opt.bad{background:var(--bad-bg);border-color:var(--bad);color:var(--bad)}
 .sentblock{width:100%;display:flex;flex-direction:column;align-items:center;gap:4px}
 .sent{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 2px}
-.tok{border:0;background:transparent;border-bottom:2px dotted var(--sakura-deep);padding:2px 3px;font-family:var(--display);font-size:1.6rem;line-height:1.3;display:inline-flex;flex-direction:column;align-items:center}
+.tok{border:0;background:transparent;border-bottom:2px dotted var(--sakura-deep);padding:2px 3px;font-family:var(--body);font-weight:500;font-size:1.6rem;line-height:1.3;display:inline-flex;flex-direction:column;align-items:center}
 .tok small{font-family:var(--body);font-size:.68rem;color:var(--muted)}
-.punct{font-family:var(--display);font-size:1.6rem;padding:2px 0}
+.punct{font-family:var(--body);font-size:1.6rem;padding:2px 0}
 .gloss{min-height:1.5em;font-size:.92rem;color:var(--sakura-deep);font-weight:500}
 .box{width:100%;background:var(--paper);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;align-items:center}
 .box .tok,.box .punct{font-size:1.25rem}
@@ -186,12 +189,35 @@ const KEY='sakura-dojo-v2';
 let S={};
 try{S=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){}
 S=Object.assign({srs:{},kata:{},romaji:false},S);
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const writeLocal=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+let pushT=null;
+const save=()=>{S.updated=Date.now();writeLocal();if(S.sync){clearTimeout(pushT);pushT=setTimeout(push,1500)}};
+
+/* ---- sync between devices: whole state stored on Netlify under an 8-letter code ---- */
+const API='/api/sync';
+const mergeSrs=(a,b)=>{const o=Object.assign({},a);for(const id in b)if(!o[id]||(b[id].t||0)>(o[id].t||0))o[id]=b[id];return o};
+console.assert(mergeSrs({x:{t:1},y:{t:5}},{x:{t:2},y:{t:3},z:{t:1}}).x.t===2&&mergeSrs({y:{t:5}},{y:{t:3}}).y.t===5,'merge self-check');
+async function push(keepalive){
+  if(!S.sync)return false;
+  const {sync,...data}=S;
+  try{return (await fetch(`${API}?code=${sync}`,{method:'PUT',body:JSON.stringify(data),keepalive:!!keepalive})).ok}catch(e){return false}
+}
+async function syncNow(code=S.sync){
+  const r=await fetch(`${API}?code=${code}`);if(!r.ok)throw new Error(r.status);
+  const R=await r.json();
+  if(R===null&&code!==S.sync)return 'missing';
+  if(R){S.srs=mergeSrs(S.srs,R.srs||{});if((R.updated||0)>(S.updated||0))S.kata=R.kata||S.kata}
+  S.sync=code;S.updated=Date.now();writeLocal();
+  return (await push())?'ok':'fail';
+}
+const newCode=()=>[...crypto.getRandomValues(new Uint8Array(8))].map(n=>'abcdefghjkmnpqrstuvwxyz23456789'[n%31]).join('');
+const syncMsg=t=>{const m=document.getElementById('syncmsg');if(m)m.textContent=t};
+const OFFLINE='Abgleich nicht möglich. Er funktioniert nur über deinen Netlify-Link und mit Internet.';
 
 /* ---- spaced repetition: box 0..6, interval in days ---- */
 const DAYS=[0,1,2,4,8,16,32];
 function next(box,ok){return ok?[Math.min(box+1,6),DAYS[Math.min(box+1,6)]*864e5]:[0,10*6e4]}
-function grade(id,ok){const c=S.srs[id]||{b:0};const [b,ms]=next(c.b,ok);S.srs[id]={b,due:Date.now()+ms}}
+function grade(id,ok){const c=S.srs[id]||{b:0};const [b,ms]=next(c.b,ok);S.srs[id]={b,due:Date.now()+ms,t:Date.now()}}
 
 /* ---- helpers ---- */
 const toks=t=>t.split(' / ').map(x=>{const [j,r,d]=x.split('|');return{j,r,d}});
@@ -322,6 +348,16 @@ function home(){
       <button class="btn ghost" id="kata">Start</button></div>
   </section>
   <section class="panel">
+    <h2>Handy und PC verbinden</h2>
+    ${S.sync?`<div>Dein Sync-Code: <strong class="code">${S.sync}</strong></div>
+      <p class="hint" style="margin:0">Gib diesen Code auf dem anderen Gerät ein. Danach gleicht sich dein Fortschritt automatisch ab.</p>
+      <div class="row"><button class="btn ghost" id="syncnow">Jetzt abgleichen</button><button class="btn ghost" id="unsync">Trennen</button></div>`
+    :`<p class="hint" style="margin:0">Erstelle auf einem Gerät einen Code und gib ihn auf dem anderen ein.</p>
+      <button class="btn" id="newsync">Code erstellen</button>
+      <div class="row"><input class="field" id="codein" maxlength="8" autocomplete="off" autocapitalize="off" placeholder="Code vom anderen Gerät" aria-label="Sync-Code"><button class="btn ghost" id="joinsync">Verbinden</button></div>`}
+    <p class="hint" id="syncmsg" aria-live="polite" style="margin:0"></p>
+  </section>
+  <section class="panel">
     <label class="toggle" for="romaji"><span>Romaji immer anzeigen<br><span class="hint">Aus ist besser fürs Kana-Lesen. Antippen zeigt sie trotzdem.</span></span>
       <input type="checkbox" id="romaji" ${S.romaji?'checked':''}></label>
     <div class="row"><button class="btn ghost" id="sound">Ton testen</button><span class="hint grow" id="soundmsg" aria-live="polite">Kein Ton? Tipp hier, dann siehst du, woran es liegt.</span></div>
@@ -333,6 +369,16 @@ function home(){
   app.querySelector('#kata').onclick=startKata;
   app.querySelector('#fs').onclick=()=>{const d=document;(d.fullscreenElement?d.exitFullscreen():d.documentElement.requestFullscreen?.())?.catch?.(()=>{})};
   app.querySelectorAll('[data-lesson]').forEach(b=>b.onclick=()=>startLesson(+b.dataset.lesson));
+  const on=(id,f)=>{const el=app.querySelector(id);if(el)el.onclick=f};
+  on('#newsync',async()=>{S.sync=newCode();save();home();syncMsg((await push())?'Code erstellt. Gib ihn jetzt auf dem anderen Gerät ein.':OFFLINE)});
+  on('#joinsync',async()=>{
+    const code=app.querySelector('#codein').value.trim().toLowerCase();
+    if(!/^[a-z0-9]{8}$/.test(code))return syncMsg('Der Code hat 8 Zeichen. Prüf ihn bitte nochmal.');
+    syncMsg('Verbinde …');
+    try{const r=await syncNow(code);if(r==='missing')return syncMsg('Diesen Code gibt es nicht. Prüf ihn bitte nochmal.');home();syncMsg(r==='ok'?'Verbunden. Dein Fortschritt ist abgeglichen.':OFFLINE)}catch(e){syncMsg(OFFLINE)}
+  });
+  on('#syncnow',async()=>{syncMsg('Gleiche ab …');try{const r=await syncNow();home();syncMsg(r==='ok'?'Abgeglichen.':OFFLINE)}catch(e){syncMsg(OFFLINE)}});
+  on('#unsync',()=>{S.sync=null;writeLocal();home();syncMsg('Getrennt. Dein Fortschritt bleibt auf diesem Gerät.')});
   app.querySelector('#sound').onclick=()=>testSound(app.querySelector('#soundmsg'));
   app.querySelector('#romaji').onchange=e=>{S.romaji=e.target.checked;save()};
   app.querySelector('#reset').onclick=()=>{if(confirmReset){S={srs:{},kata:{},romaji:S.romaji};save();confirmReset=false}else confirmReset=true;home()};
@@ -489,4 +535,6 @@ function done(){
 })();
 if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
 home();
+if(S.sync)syncNow().then(()=>{if(!session)home()}).catch(()=>{});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&S.sync){clearTimeout(pushT);push(true)}});
 </script>
