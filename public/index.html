@@ -54,6 +54,12 @@ button:focus-visible{outline:3px solid var(--sakura-deep);outline-offset:2px}
 .toggle{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .toggle input{width:20px;height:20px;accent-color:var(--torii)}
 .hint{font-size:.85rem;color:var(--muted)}
+.chapter summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px}
+.chapter summary::-webkit-details-marker{display:none}
+.chev{font-size:1.2rem;color:var(--muted);transition:transform .2s}
+.chapter[open] .chev{transform:rotate(180deg)}
+.chapter[open] summary{padding-bottom:4px;border-bottom:1px solid var(--line)}
+.chapter:not([open]){gap:0}
 .field{flex:1;min-width:0;border:1px solid var(--line);border-radius:999px;padding:11px 16px;background:var(--paper);color:var(--ink);font:inherit;text-transform:lowercase;letter-spacing:.1em}
 .code{font-size:1.4rem;letter-spacing:.15em;font-variant-numeric:tabular-nums}
 /* session shell */
@@ -173,12 +179,97 @@ const LESSONS=[
    ['こんど','kondo','nächstes Mal','今度','','こんど|kondo|nächstes Mal / おしえて|oshiete|beibringen (te-Form) / ください|kudasai|bitte / 。','Bring es mir nächstes Mal bei.'],
    ['どようび','doyōbi','Samstag','土曜日','Wochentage bekommen に: どようび に = am Samstag.','どようび|doyōbi|Samstag / に|ni|am / あいましょう|aimashō|lass uns treffen / 。','Lass uns am Samstag treffen.']],
   sents:[
-   {t:'こんど|kondo|nächstes Mal / いっしょに|issho ni|zusammen / ラーメン|rāmen|Ramen / を|o|(Objekt-Partikel) / たべませんか|tabemasen ka|wollen wir nicht essen? / 。',k:'今度一緒にラーメンを食べませんか',de:'Wollen wir mal zusammen Ramen essen gehen?',n:'〜ませんか ist die höfliche, typische Einladung.'},
+   {t:'こんど|kondo|nächstes Mal / いっしょに|issho ni|zusammen / ラーメン|rāmen|Ramen / を|o|(Objekt-Partikel) / たべませんか|tabemasen ka|wollen wir nicht essen? / 。',k:'今度一緒にラーメンを食べませんか',de:'Wollen wir mal zusammen Ramen essen gehen? (wörtlich: Wollen wir nicht … essen?)',n:'〜ませんか ist eine verneinte Frage, gemeint ist eine Einladung, wie im Deutschen „Hast du nicht Lust …?“. Die Verneinung macht sie höflicher. たべますか？ wäre nur die sachliche Frage „Essen wir …?“'},
    {t:'いいですね|ii desu ne|gute Idee / 、 / たべましょう|tabemashō|lass uns essen / ！',k:'いいですね、食べましょう',de:'Gute Idee, machen wir!'},
    {t:'どようび|doyōbi|Samstag / は|wa|(Thema) / ひま|hima|frei / ですか|desu ka|bist du …? / 。',k:'土曜日は暇ですか',de:'Hast du am Samstag Zeit?'},
    {t:'どようび|doyōbi|Samstag / なら|nara|wenn es … ist / だいじょうぶ|daijōbu|passt / です|desu|(höflich) / 。',k:'土曜日なら大丈夫です',de:'Samstag passt mir.',n:'〜なら = „wenn es um … geht“. Praktisch für Gegenvorschläge.'},
    {t:'ざんねん|zannen|schade / です|desu|ist / けど|kedo|aber / 、 / その|sono|dieser / ひ|hi|Tag / は|wa|(Thema) / ちょっと|chotto|etwas … / 。',k:'残念ですけど、その日はちょっと',de:'Schade, aber an dem Tag passt es leider nicht.',n:'Der Satz hört nach ちょっと („etwas …“) einfach auf. Gemeint ist „…ungünstig“. So sagt man auf Japanisch höflich Nein, ohne es auszusprechen.'},
-   {t:'じゃあ|jā|na dann / 、 / また|mata|wieder / こんど|kondo|nächstes Mal / 。',k:'じゃあ、また今度',de:'Na dann ein andermal!'}]}
+   {t:'じゃあ|jā|na dann / 、 / また|mata|wieder / こんど|kondo|nächstes Mal / 。',k:'じゃあ、また今度',de:'Na dann ein andermal!'}]},
+ {title:'Was machst du gerade?',jp:'進行形',seal:'今',
+  words:[
+   ['いま','ima','jetzt, gerade','今','','いま|ima|jetzt / いそがしい|isogashii|beschäftigt / です|desu|bist / か|ka|(Frage) / 。','Bist du gerade beschäftigt?'],
+   ['〜ています','~te imasu','gerade dabei sein …','','Das 〜 steht für ein Verb in der te-Form: よむ → よんで → よんでいます = „lese gerade“. Es beschreibt auch Gewohnheiten und Zustände.','いま|ima|gerade / ほん|hon|Buch / を|o|(Objekt) / よんでいます|yonde imasu|lese gerade / 。','Ich lese gerade ein Buch.'],
+   ['よむ','yomu','lesen','読む','te-Form: よんで.','まいばん|maiban|jeden Abend / マンガ|manga|Manga / を|o|(Objekt) / よみます|yomimasu|lese / 。','Ich lese jeden Abend Manga.'],
+   ['はたらく','hataraku','arbeiten','働く','te-Form: はたらいて. はたらいています = „ich arbeite (bei …)“.','ぎんこう|ginkō|Bank / で|de|bei / はたらいています|hataraite imasu|arbeite / 。','Ich arbeite bei einer Bank.'],
+   ['まつ','matsu','warten','待つ','te-Form: まって. ちょっとまって = „Warte kurz!“','えき|eki|Bahnhof / で|de|am / まっています|matte imasu|warte gerade / 。','Ich warte am Bahnhof.'],
+   ['それから','sorekara','danach, und dann','','Verbindet Handlungen in ihrer Reihenfolge.','ごはん|gohan|Essen / を|o|(Objekt) / たべました|tabemashita|habe gegessen / 。 / それから|sorekara|danach / ねました|nemashita|habe geschlafen / 。','Ich habe gegessen. Danach habe ich geschlafen.'],
+   ['あさ','asa','Morgen, morgens','朝','','あさ|asa|morgens / コーヒー|kōhī|Kaffee / を|o|(Objekt) / のみます|nomimasu|trinke / 。','Morgens trinke ich Kaffee.'],
+   ['おきる','okiru','aufstehen','起きる','te-Form: おきて.','まいあさ|maiasa|jeden Morgen / ろくじ|rokuji|6 Uhr / に|ni|um / おきます|okimasu|stehe auf / 。','Ich stehe jeden Morgen um 6 auf.']],
+  sents:[
+   {t:'いま|ima|gerade / なに|nani|was / を|o|(Objekt) / していますか|shite imasu ka|machst du gerade? / 。',k:'今何をしていますか',de:'Was machst du gerade?',n:'する → して → しています = „gerade machen“.'},
+   {t:'にほんご|nihongo|Japanisch / を|o|(Objekt) / べんきょうしています|benkyō shite imasu|lerne gerade / 。',k:'日本語を勉強しています',de:'Ich lerne (gerade) Japanisch.',n:'〜ています beschreibt auch etwas, das man über längere Zeit regelmäßig macht.'},
+   {t:'あさ|asa|morgens / おきて|okite|aufstehen und (te-Form) / 、 / シャワー|shawā|Dusche / を|o|(Objekt) / あびて|abite|duschen und (te-Form) / 、 / しごと|shigoto|Arbeit / に|ni|zu / いきます|ikimasu|gehe / 。',k:'朝起きて、シャワーを浴びて、仕事に行きます',de:'Morgens stehe ich auf, dusche und gehe zur Arbeit.',n:'Die te-Form verbindet Handlungen wie „und dann“. Nur das letzte Verb zeigt Zeit und Höflichkeit.'},
+   {t:'ちょっと|chotto|kurz / まって|matte|warten (te-Form) / ください|kudasai|bitte / 。',k:'ちょっと待ってください',de:'Warte bitte kurz.',n:'te-Form + ください = höfliche Bitte. Unter Freunden reicht ちょっとまって。'},
+   {t:'しゅうまつ|shūmatsu|Wochenende / は|wa|(Thema) / いつも|itsumo|immer / なに|nani|was / を|o|(Objekt) / していますか|shite imasu ka|machst du (so)? / 。',k:'週末はいつも何をしていますか',de:'Was machst du am Wochenende normalerweise?'}]},
+ {title:'Darf ich …?',jp:'許可',seal:'許',
+  words:[
+   ['〜てもいいですか','~te mo ii desu ka','darf ich …?','','Das 〜 steht für ein Verb in der te-Form: すわる → すわって → すわってもいいですか = „Darf ich mich setzen?“ Wörtlich: „Ist es okay, auch wenn ich …?“','しゃしん|shashin|Foto / を|o|(Objekt) / とっても|totte mo|auch wenn ich mache / いいですか|ii desu ka|ist es okay? / 。','Darf ich ein Foto machen?'],
+   ['〜てはいけません','~te wa ikemasen','man darf nicht …','','te-Form + はいけません = Verbot. Locker: 〜ちゃだめ.','ここ|koko|hier / で|de|an diesem Ort / たばこ|tabako|Zigarette / を|o|(Objekt) / すって|sutte|rauchen (te-Form) / は|wa|(Kontrast) / いけません|ikemasen|geht nicht / 。','Hier darf man nicht rauchen.'],
+   ['すわる','suwaru','sich setzen','座る','te-Form: すわって. Der Platz bekommt に.','ここ|koko|hier / に|ni|auf / すわっても|suwatte mo|auch wenn ich mich setze / いいですか|ii desu ka|ist es okay? / 。','Darf ich mich hier hinsetzen?'],
+   ['つかう','tsukau','benutzen','使う','te-Form: つかって.','この|kono|dieser / ペン|pen|Stift / を|o|(Objekt) / つかっても|tsukatte mo|auch wenn ich benutze / いいですか|ii desu ka|ist es okay? / 。','Darf ich diesen Stift benutzen?'],
+   ['しゃしん','shashin','Foto','写真','Ein Foto „nimmt“ man: しゃしん を とる.','しゃしん|shashin|Foto / を|o|(Objekt) / とりましょうか|torimashō ka|sollen wir machen? / 。','Sollen wir ein Foto machen?'],
+   ['もちろん','mochiron','natürlich, klar','','','もちろん|mochiron|natürlich / 、 / いいですよ|ii desu yo|gerne / 。','Natürlich, gerne.'],
+   ['すみません','sumimasen','Entschuldigung','','Auch zum Ansprechen („Entschuldigen Sie, …“) und als „Danke“, wenn jemand sich Mühe macht.','すみません|sumimasen|Entschuldigung / 、 / ちょっと|chotto|kurz / いいですか|ii desu ka|ist es okay? / 。','Entschuldigung, haben Sie kurz Zeit?'],
+   ['だめ','dame','geht nicht, verboten','','Locker und direkt. Höflicher ist ちょっと…','それ|sore|das / は|wa|(Thema) / だめ|dame|geht nicht / です|desu|ist / 。','Das geht nicht.']],
+  sents:[
+   {t:'すみません|sumimasen|Entschuldigung / 、 / ここ|koko|hier / に|ni|auf / すわっても|suwatte mo|auch wenn ich mich setze / いいですか|ii desu ka|ist es okay? / 。',k:'すみません、ここに座ってもいいですか',de:'Entschuldigung, darf ich mich hier hinsetzen?',n:'te-Form + も + いいですか = „darf ich …?“'},
+   {t:'はい|hai|ja / 、 / どうぞ|dōzo|bitte sehr / 。',k:'はい、どうぞ',de:'Ja, bitte sehr.'},
+   {t:'しゃしん|shashin|Foto / を|o|(Objekt) / とっても|totte mo|auch wenn ich mache / いいですか|ii desu ka|ist es okay? / 。',k:'写真を撮ってもいいですか',de:'Darf ich ein Foto machen?',n:'In Tempeln und Museen wichtig. Dort steht oft さつえいきんし = Fotografieren verboten.'},
+   {t:'すみません|sumimasen|Entschuldigung / 、 / ここ|koko|hier / で|de|an diesem Ort / たべて|tabete|essen (te-Form) / は|wa|(Kontrast) / いけません|ikemasen|geht nicht / 。',k:'すみません、ここで食べてはいけません',de:'Entschuldigung, hier darf man nicht essen.'},
+   {t:'まど|mado|Fenster / を|o|(Objekt) / あけても|akete mo|auch wenn ich öffne / いいですか|ii desu ka|ist es okay? / 。 / ちょっと|chotto|etwas / あつい|atsui|warm / です|desu|ist / ね|ne|…, oder? / 。',k:'窓を開けてもいいですか。ちょっと暑いですね',de:'Darf ich das Fenster öffnen? Es ist etwas warm, oder?'}]},
+ {title:'Vergleichen',jp:'比較',seal:'比',
+  words:[
+   ['〜より','~yori','als (beim Vergleich)','','A は B より … = „A ist …er als B“. Das 〜 steht für das, womit verglichen wird.','いぬ|inu|Hund / は|wa|(Thema) / ねこ|neko|Katze / より|yori|als / おおきい|ōkii|groß / です|desu|ist / 。','Ein Hund ist größer als eine Katze.'],
+   ['〜のほうが','~no hō ga','eher …, lieber …','','Betont die Seite, die gewinnt: A の ほうが … = „A ist eher …“','わたし|watashi|ich / は|wa|(Thema) / なつ|natsu|Sommer / の|no|(von) / ほうが|hō ga|eher / すき|suki|mögen / です|desu|(höflich) / 。','Ich mag eher den Sommer.'],
+   ['いちばん','ichiban','am meisten, Nummer eins','一番','','なに|nani|was / が|ga|(Subjekt) / いちばん|ichiban|am meisten / すき|suki|mögen / ですか|desu ka|ist? / 。','Was magst du am liebsten?'],
+   ['どちら','dochira','welches (von zweien)','','Locker: どっち.','コーヒー|kōhī|Kaffee / と|to|und / おちゃ|ocha|Tee / 、 / どちら|dochira|welches / が|ga|(Subjekt) / いいですか|ii desu ka|ist besser? / 。','Kaffee oder Tee, was möchtest du?'],
+   ['おおきい','ōkii','groß','大きい','Gegenteil: ちいさい (klein).','この|kono|dieser / いえ|ie|Haus / は|wa|(Thema) / おおきい|ōkii|groß / です|desu|ist / ね|ne|…, oder? / 。','Dieses Haus ist groß, oder?'],
+   ['たかい','takai','teuer; hoch','高い','Gegenteil von teuer: やすい.','とうきょう|Tōkyō|Tokio / は|wa|(Thema) / たかい|takai|teuer / です|desu|ist / 。','Tokio ist teuer.'],
+   ['やすい','yasui','billig, günstig','安い','','この|kono|dieser / みせ|mise|Laden / は|wa|(Thema) / やすい|yasui|günstig / です|desu|ist / よ|yo|(sag ich dir) / 。','Dieser Laden ist günstig, echt.'],
+   ['なつ','natsu','Sommer','夏','Die Jahreszeiten: はる Frühling, なつ Sommer, あき Herbst, ふゆ Winter.','にほん|Nihon|Japan / の|no|(von) / なつ|natsu|Sommer / は|wa|(Thema) / あつい|atsui|heiß / です|desu|ist / 。','Der Sommer in Japan ist heiß.']],
+  sents:[
+   {t:'ドイツ|Doitsu|Deutschland / は|wa|(Thema) / にほん|Nihon|Japan / より|yori|als / さむい|samui|kalt / です|desu|ist / か|ka|(Frage) / 。',k:'ドイツは日本より寒いですか',de:'Ist es in Deutschland kälter als in Japan?',n:'Japanische Adjektive haben keine Steigerungsform. より macht aus さむい „kälter“.'},
+   {t:'すし|sushi|Sushi / と|to|und / ラーメン|rāmen|Ramen / 、 / どちら|dochira|welches / が|ga|(Subjekt) / すき|suki|mögen / ですか|desu ka|ist? / 。',k:'寿司とラーメン、どちらが好きですか',de:'Was magst du lieber, Sushi oder Ramen?'},
+   {t:'ラーメン|rāmen|Ramen / の|no|(von) / ほうが|hō ga|eher / すき|suki|mögen / です|desu|(höflich) / 。',k:'ラーメンのほうが好きです',de:'Ich mag Ramen lieber.',n:'Typische Antwort auf どちら: A の ほうが …'},
+   {t:'きせつ|kisetsu|Jahreszeit / の|no|(von) / なか|naka|unter / で|de|(Bereich) / はる|haru|Frühling / が|ga|(Subjekt) / いちばん|ichiban|am meisten / すき|suki|mögen / です|desu|(höflich) / 。',k:'季節の中で春が一番好きです',de:'Von den Jahreszeiten mag ich den Frühling am liebsten.',n:'〜の なかで … が いちばん = „unter … ist … am meisten“. Im Frühling blühen die Sakura.'},
+   {t:'とうきょう|Tōkyō|Tokio / は|wa|(Thema) / ベルリン|Berurin|Berlin / より|yori|als / たかい|takai|teuer / と|to|(dass …) / おもいます|omoimasu|denke ich / 。',k:'東京はベルリンより高いと思います',de:'Ich glaube, Tokio ist teurer als Berlin.'}]},
+ {title:'Locker mit Freunden',jp:'タメ口',seal:'友',
+  words:[
+   ['うん','un','ja (locker)','','Unter Freunden statt はい.','うん|un|ja / 、 / いいよ|ii yo|klar, gern / 。','Ja, klar!'],
+   ['ううん','ūn','nein (locker)','','Unter Freunden statt いいえ. Mit fallender Betonung.','ううん|ūn|nein / 、 / ちがう|chigau|stimmt nicht / よ|yo|(sag ich dir) / 。','Nein, stimmt nicht.'],
+   ['いく？','iku?','gehst du? (locker)','行く？','Locker fragt man einfach mit der Wörterbuchform und hebt am Ende die Stimme. Statt いきますか.','あした|ashita|morgen / いく|iku|gehst du hin / ？','Gehst du morgen hin?'],
+   ['〜じゃない','~ja nai','ist nicht (locker)','','Lockere Form von 〜じゃありません. Das 〜 steht für ein Nomen.','それ|sore|das / 、 / わたし|watashi|ich / の|no|(von) / じゃない|ja nai|ist nicht / よ|yo|(sag ich dir) / 。','Das ist nicht meins.'],
+   ['〜ない','~nai','nicht (locker)','','Lockere Verneinung: のみません → のまない, いきません → いかない.','きょう|kyō|heute / は|wa|(Thema) / のまない|nomanai|trinke nicht / 。','Heute trinke ich nichts.'],
+   ['よ','yo','(Nachdruck: sag ich dir)','','Am Satzende: Du gibst dem anderen eine neue Info.','おいしい|oishii|lecker / よ|yo|(sag ich dir) / 。','Das ist lecker, echt!'],
+   ['ね','ne','…, ne? / …, oder?','','Am Satzende: Du suchst Zustimmung. Wie das deutsche „ne?“.','いい|ii|gut / てんき|tenki|Wetter / だ|da|ist / ね|ne|…, ne? / 。','Schönes Wetter, ne?'],
+   ['〜んだ','~n da','es ist nämlich so, dass …','','Erklärt oder betont einen Grund. Höflich: 〜んです. Nach Nomen: 〜なんだ.','あした|ashita|morgen / しごと|shigoto|Arbeit / なんだ|nan da|ist nämlich / 。','Morgen muss ich nämlich arbeiten.']],
+  sents:[
+   {t:'あした|ashita|morgen / ひま|hima|Zeit haben / ？',k:'明日暇',de:'Hast du morgen Zeit?',n:'Unter Freunden fällt です weg. Die Frage erkennt man nur an der Betonung.'},
+   {t:'うん|un|ja / 、 / ひま|hima|frei / だよ|da yo|bin (sag ich dir) / 。',k:'うん、暇だよ',de:'Ja, ich hab Zeit.',n:'だ ist die lockere Form von です.'},
+   {t:'えいが|eiga|Film / みに|mi ni|um zu sehen / いかない|ikanai|gehen wir nicht? / ？',k:'映画見に行かない',de:'Wollen wir ins Kino? (wörtlich: Gehen wir nicht einen Film sehen?)',n:'Die lockere Einladung funktioniert genau wie 〜ませんか über die Verneinung. Verbstamm + に いく = gehen, um zu …'},
+   {t:'ごめん|gomen|sorry / 、 / あした|ashita|morgen / は|wa|(Thema) / ちょっと|chotto|etwas … / 。 / しごと|shigoto|Arbeit / なんだ|nan da|ist nämlich / 。',k:'ごめん、明日はちょっと。仕事なんだ',de:'Sorry, morgen passt es nicht so. Ich muss nämlich arbeiten.',n:'ごめん ist das lockere „Entschuldigung“.'},
+   {t:'じゃあ|jā|na dann / 、 / どようび|doyōbi|Samstag / は|wa|(Thema) / どう|dō|wie / ？',k:'じゃあ、土曜日はどう',de:'Na dann, wie wäre es mit Samstag?',n:'〜は どう？ = „Wie wäre es mit …?“ Höflich: 〜は どうですか。'}]},
+ {title:'Nachfragen und verstehen',jp:'聞き返す',seal:'聞',
+  words:[
+   ['もういちど','mō ichido','noch einmal','もう一度','','もういちど|mō ichido|noch einmal / おねがいします|onegaishimasu|bitte / 。','Noch einmal, bitte.'],
+   ['ゆっくり','yukkuri','langsam','','','もうすこし|mō sukoshi|etwas mehr / ゆっくり|yukkuri|langsam / おねがいします|onegaishimasu|bitte / 。','Etwas langsamer, bitte.'],
+   ['わかる','wakaru','verstehen','分かる','Was man versteht, bekommt が: にほんご が わかります.','すこし|sukoshi|ein bisschen / わかります|wakarimasu|verstehe / 。','Ich verstehe ein bisschen.'],
+   ['いみ','imi','Bedeutung','意味','','この|kono|dieses / ことば|kotoba|Wort / の|no|(von) / いみ|imi|Bedeutung / は|wa|(Thema) / なんですか|nan desu ka|was ist? / 。','Was bedeutet dieses Wort?'],
+   ['ことば','kotoba','Wort, Sprache','言葉','','むずかしい|muzukashii|schwierig / ことば|kotoba|Wort / です|desu|ist / ね|ne|…, oder? / 。','Ein schwieriges Wort, oder?'],
+   ['〜って','~tte','„…“ (locker zitieren)','','Locker für „das Wort …“: 〜って なに？ = „Was heißt …?“ Das 〜 steht für das Wort, nach dem du fragst.','つんどく|tsundoku|Tsundoku / って|tte|(das Wort) / なに|nani|was / ？','Was heißt „Tsundoku“?'],
+   ['えいご','eigo','Englisch','英語','','えいご|eigo|Englisch / で|de|auf (Sprache) / いいですか|ii desu ka|ist es okay? / 。','Ist Englisch okay?'],
+   ['かく','kaku','schreiben','書く','te-Form: かいて.','なまえ|namae|Name / を|o|(Objekt) / かいて|kaite|schreiben (te-Form) / ください|kudasai|bitte / 。','Schreib bitte deinen Namen auf.']],
+  sents:[
+   {t:'すみません|sumimasen|Entschuldigung / 、 / もういちど|mō ichido|noch einmal / いって|itte|sagen (te-Form) / ください|kudasai|bitte / 。',k:'すみません、もう一度言ってください',de:'Entschuldigung, sag es bitte noch einmal.'},
+   {t:'もうすこし|mō sukoshi|etwas mehr / ゆっくり|yukkuri|langsam / はなして|hanashite|sprechen (te-Form) / ください|kudasai|bitte / 。',k:'もう少しゆっくり話してください',de:'Sprich bitte etwas langsamer.'},
+   {t:'さくら|sakura|Sakura / は|wa|(Thema) / ドイツご|doitsugo|Deutsch / で|de|auf / なん|nan|was / ですか|desu ka|ist? / 。',k:'桜はドイツ語で何ですか',de:'Wie heißt „Sakura“ auf Deutsch?',n:'[Wort] は [Sprache] で なんですか = „Wie heißt … auf …?“ Damit fragst du nach jeder Vokabel.'},
+   {t:'すみません|sumimasen|Entschuldigung / 、 / よく|yoku|gut / わかりません|wakarimasen|verstehe nicht / 。',k:'すみません、よく分かりません',de:'Entschuldigung, ich verstehe das nicht so ganz.',n:'よく わかりません ist höflicher als nur わかりません.'},
+   {t:'ここ|koko|hier / に|ni|hin / かいて|kaite|schreiben (te-Form) / もらえますか|moraemasu ka|könnten Sie (für mich)? / 。',k:'ここに書いてもらえますか',de:'Könnten Sie es mir hier aufschreiben?',n:'te-Form + もらえますか = „Könnten Sie … für mich?“ Eine sehr höfliche Bitte.'}]}
+];
+// Chapters group lessons by index; lesson indexes must never change, saved progress uses them.
+const CHAPTERS=[
+ {title:'Kapitel 1',name:'Ins Gespräch kommen',lessons:[0,1,2,3,4]},
+ {title:'Kapitel 2',name:'Flüssiger reden',lessons:[5,6,7,8,9]}
 ];
 LESSONS.forEach(L=>L.words=L.words.map(([j,r,d,k,n,ex,exde])=>({j,r,d,k,n,ex:ex?{t:ex,de:exde}:null})));
 const KATA='ア a イ i ウ u エ e オ o カ ka キ ki ク ku ケ ke コ ko サ sa シ shi ス su セ se ソ so タ ta チ chi ツ tsu テ te ト to ナ na ニ ni ヌ nu ネ ne ノ no ハ ha ヒ hi フ fu ヘ he ホ ho マ ma ミ mi ム mu メ me モ mo ヤ ya ユ yu ヨ yo ラ ra リ ri ル ru レ re ロ ro ワ wa ヲ wo ン n'
@@ -333,15 +424,19 @@ function home(){
     <p class="muted" style="margin:0">Die Wiederholung bringt Wörter und Sätze zurück, kurz bevor du sie vergisst. Ein paar alte Bekannte mischen sich immer dazu.</p>
     <button class="btn" id="rev" ${Object.keys(S.srs).length?'':'disabled'}>${due?'Jetzt wiederholen':'Trotzdem üben'}</button>
   </section>
-  <section class="panel">
-    <h2>Lektionen</h2>
-    ${LESSONS.map((L,i)=>{const tot=L.words.length+L.sents.length;const n=Object.keys(S.srs).filter(id=>id.split(':')[1]==i).length;
+  ${CHAPTERS.map((C,ci)=>{const ids=chapterIds(ci),learned=ids.filter(id=>S.srs[id]).length,strong=ids.filter(id=>(S.srs[id]?.b||0)>=2).length;
+    return `<details class="panel chapter" ${ci===openChapter()?'open':''}>
+    <summary><div class="grow"><div class="eyebrow">${C.title}</div><h2>${C.name}</h2>
+      <div class="hint">${learned} von ${ids.length} gelernt · ${strong} sitzen schon sicher</div></div>
+      ${learned?`<button class="btn" data-chapter="${ci}" aria-label="${C.title} wiederholen">Wiederholen</button>`:''}<span class="chev" aria-hidden="true">▾</span></summary>
+    ${learned?`<p class="hint" style="margin:0">„Wiederholen“ mischt 20 Aufgaben aus allen gelernten Lektionen des Kapitels. Was noch wackelt, kommt zuerst.</p>`:''}
+    ${C.lessons.map((i,k)=>{const L=LESSONS[i],tot=L.words.length+L.sents.length,n=Object.keys(S.srs).filter(id=>id.split(':')[1]==i).length;
       return `<div class="lesson"><div class="seal" aria-hidden="true">${L.seal}</div>
-      <div class="grow"><div><strong>${L.title}</strong> <span class="muted jp">${L.jp}</span></div>
+      <div class="grow"><div><strong>${ci+1}.${k+1} ${L.title}</strong> <span class="muted jp">${L.jp}</span></div>
       <div class="bar" aria-label="${n} von ${tot} gelernt"><i style="width:${n/tot*100}%"></i></div>
       <div class="hint">${n} von ${tot} gelernt</div></div>
       <button class="btn ${n?'ghost':''}" data-lesson="${i}">${n?'Nochmal':'Lernen'}</button></div>`}).join('')}
-  </section>
+  </details>`}).join('')}
   <section class="panel">
     <div class="row"><div class="seal jp" aria-hidden="true">カ</div>
       <div class="grow"><strong>Katakana-Training</strong><div class="hint">15 Zeichen. Die, die du oft verwechselst, kommen öfter dran.</div></div>
@@ -368,6 +463,7 @@ function home(){
   app.querySelector('#rev').onclick=startReview;
   app.querySelector('#kata').onclick=startKata;
   app.querySelector('#fs').onclick=()=>{const d=document;(d.fullscreenElement?d.exitFullscreen():d.documentElement.requestFullscreen?.())?.catch?.(()=>{})};
+  app.querySelectorAll('[data-chapter]').forEach(b=>b.onclick=()=>startChapter(+b.dataset.chapter));
   app.querySelectorAll('[data-lesson]').forEach(b=>b.onclick=()=>startLesson(+b.dataset.lesson));
   const on=(id,f)=>{const el=app.querySelector(id);if(el)el.onclick=f};
   on('#newsync',async()=>{S.sync=newCode();save();home();syncMsg((await push())?'Code erstellt. Gib ihn jetzt auf dem anderen Gerät ein.':OFFLINE)});
@@ -401,6 +497,15 @@ function startLesson(li){
   shuffle([...L.words.keys()]).forEach(i=>q.push(mcItem(li,i,'dj')));
   L.sents.forEach((s,i)=>q.push({k:'card',id:`s:${li}:${i}`,dir:'jd'}));
   run(L.title,q);
+}
+const chapterIds=ci=>CHAPTERS[ci].lessons.flatMap(li=>[...LESSONS[li].words.map((_,i)=>`w:${li}:${i}`),...LESSONS[li].sents.map((_,i)=>`s:${li}:${i}`)]);
+// open the first chapter that is not fully learned, otherwise the last one
+const openChapter=()=>{const i=CHAPTERS.findIndex((_,ci)=>chapterIds(ci).some(id=>!S.srs[id]));return i<0?CHAPTERS.length-1:i};
+function startChapter(ci){
+  const now=Date.now(),weak=id=>S.srs[id].b-(S.srs[id].due<=now?1:0);
+  const pick=shuffle(chapterIds(ci).filter(id=>S.srs[id])).sort((a,b)=>weak(a)-weak(b)).slice(0,20);
+  const dir=()=>Math.random()<.5?'jd':'dj';
+  run(`${CHAPTERS[ci].title} · Wiederholung`,shuffle(pick.map(id=>{const [k,l,i]=id.split(':');return k==='w'&&Math.random()<.5?mcItem(+l,+i,dir()):{k:'card',id,dir:dir()}})));
 }
 function startReview(){
   const due=shuffle(dueIds()).slice(0,20);
